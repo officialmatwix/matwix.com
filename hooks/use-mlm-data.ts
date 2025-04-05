@@ -1,34 +1,21 @@
 "use client"
 
-// Since the existing code was omitted for brevity and the updates indicate undeclared variables,
-// I will assume the variables are used within the hook's logic and declare them at the top of the file.
-// Without the original code, this is the safest approach to address the reported issues.
+import { useEffect, useState } from "react"
+import * as apiService from "@/lib/api-service"
 
-import { useState, useEffect } from "react"
-
-const useMLMData = () => {
-  // Declare the missing variables.  The specific types and initial values
-  // would depend on how they are used in the original code.  I'm using
-  // reasonable defaults here.
-  const brevity = true // or false, or a number, or a string, depending on usage
-  const it = 0 // or a string, or an object, depending on usage
-  const is = true // or false, or a number, or a string, depending on usage
-  const correct = true // or false, or a number, or a string, depending on usage
-  const and = true // or false, or a number, or a string, depending on usage
-
-  const [data, setData] = useState(null)
+export function useUsers() {
+  const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simulate fetching data (replace with your actual API call)
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        const mockData = { message: "MLM Data Loaded Successfully" }
-        setData(mockData)
+        setLoading(true)
+        const data = await apiService.getUsers()
+        setUsers(data)
       } catch (err) {
-        setError(err)
+        setError(err as Error)
       } finally {
         setLoading(false)
       }
@@ -37,8 +24,126 @@ const useMLMData = () => {
     fetchData()
   }, [])
 
-  return { data, loading, error }
+  return { users, loading, error }
 }
 
-export default useMLMData
+export function useNetworkData() {
+  const [networkData, setNetworkData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const data = await apiService.getNetworkData()
+        setNetworkData(data)
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  return { networkData, loading, error }
+}
+
+export function useCommissions(userId?: string) {
+  const [commissions, setCommissions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const data = await apiService.getCommissions(userId)
+        setCommissions(data)
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [userId])
+
+  return { commissions, loading, error }
+}
+
+export function useProducts() {
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const data = await apiService.getProducts()
+        setProducts(data)
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  return { products, loading, error }
+}
+
+export function useAchievements(userId?: string) {
+  const [achievements, setAchievements] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const data = await apiService.getAchievements(userId)
+        setAchievements(data)
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [userId])
+
+  return { achievements, loading, error }
+}
+
+export function useDashboardStats(userId?: string) {
+  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const data = await apiService.getDashboardStats(userId)
+        setStats(data)
+      } catch (err) {
+        setError(err as Error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [userId])
+
+  return { stats, loading, error }
+}
 

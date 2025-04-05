@@ -1,54 +1,39 @@
-// Mock authentication service
+"use client"
 
-// Store for our "database" of users
-const users = [
-  {
-    id: "1",
-    name: "Admin User",
-    email: "admin@example.com",
-    password: "admin", // In a real app, this would be hashed
-    role: "admin",
-  },
-  {
-    id: "2",
-    name: "John Doe",
-    email: "john@example.com",
-    password: "password123", // In a real app, this would be hashed
-    role: "user",
-  },
-]
+// Client-side authentication service
+// This file should only contain client-side code
 
 // Function to simulate login
 export async function login(email: string, password: string) {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  try {
+    // Call the login API endpoint instead of directly accessing the database
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    })
 
-  // Find user
-  const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password)
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || "Login failed")
+    }
 
-  if (!user) {
-    throw new Error("Invalid email or password")
-  }
+    const data = await response.json()
 
-  // Create a token (in a real app, this would be a JWT)
-  const token = btoa(JSON.stringify({ id: user.id, email: user.email, role: user.role }))
+    // Store token in localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("auth_token", data.token)
 
-  // Store token in localStorage
-  if (typeof window !== "undefined") {
-    localStorage.setItem("auth_token", token)
+      // Also set a cookie for the middleware
+      document.cookie = `auth_token=${data.token}; path=/; max-age=86400; SameSite=Lax`
+    }
 
-    // Also set a cookie for the middleware
-    document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`
-  }
-
-  return {
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
-    token,
+    return data
+  } catch (error) {
+    console.error("Login error:", error)
+    throw error
   }
 }
 
@@ -65,19 +50,7 @@ export function getCurrentUser() {
   }
 
   try {
-    const userData = JSON.parse(atob(token))
-    const user = users.find((u) => u.id === userData.id)
-
-    if (!user) {
-      return null
-    }
-
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    }
+    return JSON.parse(atob(token))
   } catch (error) {
     console.error("Error parsing auth token:", error)
     return null

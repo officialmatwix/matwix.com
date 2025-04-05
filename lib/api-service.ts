@@ -1,17 +1,81 @@
-// Since the original file was left out for brevity, and the updates indicate undeclared variables,
-// I will assume the file contains tests or assertions that use 'it', 'is', 'correct', and 'and'.
-// I will add a minimal import from a testing library like 'jest' or 'chai' to resolve the undeclared variables.
-// If the file is not a test file, then these variables are likely errors and should be addressed differently.
-// For this example, I'll assume it's a test file and import from 'jest'.
+// API service for fetching data from the frontend
 
-import { it, expect } from "@jest/globals"
+// Generic fetch function with error handling
+async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  try {
+    // Use relative path
+    const url = `/api/${endpoint}`
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    })
 
-// The rest of the original file content would go here.
-// Assuming the original file is correct and does not need any modifications other than the import.
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || "API request failed")
+    }
 
-// Example usage to demonstrate the fix:
-it("should pass", () => {
-  const value = 1
-  expect(value).toBe(1)
-})
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error(`API Error (${endpoint}):`, error)
+    throw error
+  }
+}
+
+// User related API calls
+export async function getUsers() {
+  const response = await fetchAPI<any>("users")
+  return response.data
+}
+
+export async function getUserById(userId: string) {
+  const response = await fetchAPI<any>(`users/${userId}`)
+  return response.data
+}
+
+// Network related API calls
+export async function getNetworkData() {
+  const response = await fetchAPI<any>("network")
+  return response.data
+}
+
+// Commission related API calls
+export async function getCommissions(userId?: string) {
+  const endpoint = userId ? `commissions?userId=${userId}` : "commissions"
+  const response = await fetchAPI<any>(endpoint)
+  return response.data
+}
+
+// Product related API calls
+export async function getProducts() {
+  const response = await fetchAPI<any>("products")
+  return response.data
+}
+
+// Achievement related API calls
+export async function getAchievements(userId?: string) {
+  const endpoint = userId ? `achievements?userId=${userId}` : "achievements"
+  const response = await fetchAPI<any>(endpoint)
+  return response.data
+}
+
+// Dashboard stats
+export async function getDashboardStats(userId?: string) {
+  const endpoint = userId ? `dashboard/stats?userId=${userId}` : "dashboard/stats"
+  const response = await fetchAPI<any>(endpoint)
+  return response.data
+}
+
+// Mock function to simulate API calls for features not yet implemented
+export async function mockAPICall<T>(data: T, delay = 500): Promise<T> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(data)
+    }, delay)
+  })
+}
 
