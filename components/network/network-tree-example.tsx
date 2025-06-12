@@ -1,94 +1,108 @@
 "use client"
+import { Tree, TreeNode } from "react-organizational-chart"
+import { Avatar } from "@/components/ui/avatar"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
-import BinaryTreeVisualization from "./binary-tree-visualization"
-
-// Sample network data
-const sampleNetworkData = {
-  id: "1001",
-  name: "John Doe",
-  rank: "Diamond",
-  status: "active" as const,
-  personalVolume: 1250,
-  groupVolume: 15750,
-  joinDate: "Jan 15, 2022",
-  left: {
-    id: "1002",
-    name: "Sarah Johnson",
-    rank: "Platinum",
-    status: "active" as const,
-    personalVolume: 950,
-    groupVolume: 8500,
-    joinDate: "Mar 22, 2022",
-    left: {
-      id: "1004",
-      name: "Michael Chen",
-      rank: "Gold",
-      status: "active" as const,
-      personalVolume: 650,
-      groupVolume: 3200,
-      joinDate: "Jun 10, 2022",
-      left: {
-        id: "1008",
-        name: "Lisa Martinez",
-        rank: "Silver",
-        status: "active" as const,
-        personalVolume: 420,
-        groupVolume: 1200,
-        joinDate: "Sep 05, 2022",
-      },
-      right: {
-        id: "1009",
-        name: "Robert Kim",
-        rank: "Bronze",
-        status: "inactive" as const,
-        personalVolume: 180,
-        groupVolume: 180,
-        joinDate: "Oct 15, 2022",
-      },
-    },
-    right: {
-      id: "1005",
-      name: "Emily Taylor",
-      rank: "Silver",
-      status: "active" as const,
-      personalVolume: 380,
-      groupVolume: 1800,
-      joinDate: "Jul 18, 2022",
-    },
-  },
-  right: {
-    id: "1003",
-    name: "David Rodriguez",
-    rank: "Gold",
-    status: "active" as const,
-    personalVolume: 780,
-    groupVolume: 4200,
-    joinDate: "Apr 05, 2022",
-    left: {
-      id: "1006",
-      name: "Jessica Williams",
-      rank: "Silver",
-      status: "active" as const,
-      personalVolume: 450,
-      groupVolume: 1500,
-      joinDate: "Aug 30, 2022",
-    },
-    right: {
-      id: "1007",
-      name: "Alex Johnson",
-      rank: "Bronze",
-      status: "inactive" as const,
-      personalVolume: 220,
-      groupVolume: 220,
-      joinDate: "Sep 12, 2022",
-    },
-  },
+// Create a custom styled node component
+const StyledNode = ({ node }: { node: any }) => {
+  return (
+    <Card className="inline-block p-2 bg-slate-800/90 border-slate-700 shadow-md">
+      <div className="flex items-center gap-2">
+        <Avatar className="h-8 w-8 border-2 border-cyan-500">
+          <img src={node.avatar || "/placeholder-user.jpg"} alt={node.name} />
+        </Avatar>
+        <div>
+          <div className="text-xs font-medium text-slate-100">{node.name}</div>
+          <div className="flex items-center gap-1">
+            <Badge variant="outline" className="text-[10px] h-4 px-1 border-cyan-500/50 text-cyan-400">
+              {node.rank}
+            </Badge>
+            <span className="text-[10px] text-slate-400">{node.joinDate}</span>
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
 }
 
-export default function NetworkTreeExample() {
+// Sample network data
+const networkData = {
+  name: "John Doe",
+  rank: "Diamond",
+  joinDate: "2020-01-15",
+  avatar: "/placeholder-user.jpg",
+  children: [
+    {
+      name: "Alice Smith",
+      rank: "Gold",
+      joinDate: "2021-03-22",
+      avatar: "/placeholder-user.jpg",
+      children: [
+        {
+          name: "Bob Johnson",
+          rank: "Silver",
+          joinDate: "2022-05-10",
+          avatar: "/placeholder-user.jpg",
+          children: [],
+        },
+        {
+          name: "Carol Williams",
+          rank: "Bronze",
+          joinDate: "2022-06-15",
+          avatar: "/placeholder-user.jpg",
+          children: [],
+        },
+      ],
+    },
+    {
+      name: "David Brown",
+      rank: "Platinum",
+      joinDate: "2021-02-18",
+      avatar: "/placeholder-user.jpg",
+      children: [
+        {
+          name: "Eve Davis",
+          rank: "Gold",
+          joinDate: "2022-01-05",
+          avatar: "/placeholder-user.jpg",
+          children: [
+            {
+              name: "Frank Miller",
+              rank: "Silver",
+              joinDate: "2022-08-20",
+              avatar: "/placeholder-user.jpg",
+              children: [],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Grace Wilson",
+      rank: "Gold",
+      joinDate: "2021-05-30",
+      avatar: "/placeholder-user.jpg",
+      children: [],
+    },
+  ],
+}
+
+// Recursive function to render the tree
+const renderTree = (node: any) => (
+  <TreeNode key={node.name} label={<StyledNode node={node} />}>
+    {node.children.map((child: any) => renderTree(child))}
+  </TreeNode>
+)
+
+export function NetworkTreeExample() {
   return (
-    <div className="grid gap-6">
-      <BinaryTreeVisualization rootMember={sampleNetworkData} />
+    <div className="w-full h-full overflow-auto p-8">
+      <Tree lineWidth="2px" lineColor="#0891b2" lineBorderRadius="10px" label={<StyledNode node={networkData} />}>
+        {networkData.children.map(renderTree)}
+      </Tree>
     </div>
   )
 }
+
+export default NetworkTreeExample

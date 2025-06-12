@@ -1,49 +1,49 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// This function can be marked `async` if using `await` inside
+// Define which paths require authentication
+const protectedPaths = [
+  "/dashboard",
+  "/dashboard/network",
+  "/dashboard/team",
+  "/dashboard/commissions",
+  "/dashboard/products",
+  "/dashboard/recruitment",
+  "/dashboard/achievements",
+  "/dashboard/settings",
+  "/dashboard/visualization",
+]
+
+// Define which paths should redirect to dashboard if already authenticated
+const authPaths = ["/login", "/register", "/forgot-password"]
+
 export function middleware(request: NextRequest) {
-  // Get the pathname of the request
-  const path = request.nextUrl.pathname
+  const { pathname } = request.nextUrl
 
-  // Skip middleware for static files and API routes
-  if (
-    path.startsWith("/_next/") ||
-    path.startsWith("/api/") ||
-    path.includes("favicon.ico") ||
-    path.includes(".png") ||
-    path.includes(".jpg") ||
-    path.includes(".svg")
-  ) {
-    return NextResponse.next()
-  }
+  // Check if the path is protected
+  const isProtectedPath = protectedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 
-  // Define public paths that don't require authentication
-  const isPublicPath =
-    path === "/" || path === "/login" || path === "/register" || path === "/forgot-password" || path === "/admin-login"
+  // Check if the path is an auth path
+  const isAuthPath = authPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 
-  // Get the token from cookies
-  const token = request.cookies.get("auth_token")?.value
+  // Get the authentication token from the cookies
+  const authToken = request.cookies.get("auth_token")?.value
 
-  // If the path requires authentication and no token exists, redirect to login
-  if (!isPublicPath && !token) {
-    // Create a new URL to redirect to login
+  // If the path is protected and there's no token, redirect to login
+  if (isProtectedPath && !authToken) {
     const url = new URL("/login", request.url)
-    // Add the current path as a redirect parameter
-    url.searchParams.set("redirect", path)
+    url.searchParams.set("from", pathname)
     return NextResponse.redirect(url)
   }
 
-  // If the user is logged in and tries to access login/register page, redirect to dashboard
-  if (isPublicPath && token && path !== "/") {
+  // If the path is an auth path and there's a token, redirect to dashboard
+  if (isAuthPath && authToken) {
     return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
-  // Continue with the request
   return NextResponse.next()
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
   matcher: [
     /*
@@ -51,7 +51,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public folder
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|images).*)",
   ],
 }

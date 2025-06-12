@@ -6,78 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import {
-  Users,
-  UserPlus,
-  Mail,
-  Phone,
-  MessageSquare,
-  Calendar,
-  Clock,
-  DollarSign,
-  Award,
-  Send,
-  ImageIcon,
-  Mic,
-} from "lucide-react"
+import { Users, UserPlus, Mail, Phone, MessageSquare, Calendar, Clock, DollarSign, Award } from "lucide-react"
 import { useMLMData } from "@/context/mlm-data-context"
 import { formatCurrency } from "@/lib/utils"
-import { useMatwixCompensation } from "@/context/matwix-compensation-context"
 
 export default function TeamPage() {
   const { downlineMembers } = useMLMData()
-  const { getRankName, getRankColor } = useMatwixCompensation()
   const [selectedMember, setSelectedMember] = useState(downlineMembers[0])
-  const [groupChatMessage, setGroupChatMessage] = useState("")
-
-  const [groupChatMessages, setGroupChatMessages] = useState<
-    { id: number; sender: string; message: string; time: string; isUser: boolean }[]
-  >([
-    {
-      id: 1,
-      sender: "System",
-      message: "Team chat room - All members can see messages here",
-      time: "09:00",
-      isUser: false,
-    },
-    {
-      id: 2,
-      sender: "Sarah Johnson",
-      message: "Just recruited a new member! Everyone please welcome Alex to the team.",
-      time: "09:15",
-      isUser: false,
-    },
-    {
-      id: 3,
-      sender: "Michael Chen",
-      message: "Welcome Alex! Let me know if you need any help getting started.",
-      time: "09:17",
-      isUser: false,
-    },
-    {
-      id: 4,
-      sender: "You",
-      message: "Great work Sarah! Alex, we're excited to have you on board.",
-      time: "09:20",
-      isUser: true,
-    },
-  ])
-
-  const handleSendGroupMessage = () => {
-    if (!groupChatMessage.trim()) return
-
-    const newMessage = {
-      id: groupChatMessages.length + 1,
-      sender: "You",
-      message: groupChatMessage,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      isUser: true,
-    }
-
-    setGroupChatMessages([...groupChatMessages, newMessage])
-    setGroupChatMessage("")
-  }
 
   return (
     <div className="grid gap-6">
@@ -132,7 +67,7 @@ export default function TeamPage() {
                     </Avatar>
                     <div className="flex-1">
                       <div className="text-sm font-medium text-slate-200">{member.name}</div>
-                      <div className="text-xs text-slate-400">{getRankName(member.rank)}</div>
+                      <div className="text-xs text-slate-400">{member.rank}</div>
                     </div>
                     <Badge
                       variant="outline"
@@ -191,19 +126,13 @@ export default function TeamPage() {
                   >
                     Downline
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="chat"
-                    className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
-                  >
-                    Team Chat
-                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-0 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
                       <div className="text-xs text-slate-500 mb-1">Rank</div>
-                      <div className="text-sm font-medium text-slate-200">{getRankName(selectedMember.rank)}</div>
+                      <div className="text-sm font-medium text-slate-200">{selectedMember.rank}</div>
                     </div>
                     <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
                       <div className="text-xs text-slate-500 mb-1">Joined</div>
@@ -393,7 +322,7 @@ export default function TeamPage() {
                           <div className="flex-1">
                             <div className="text-sm text-slate-300">{member.name}</div>
                             <div className="text-xs text-slate-400">
-                              {getRankName(member.rank)} • {formatCurrency(member.sales)}
+                              {member.rank} • {formatCurrency(member.sales)}
                             </div>
                           </div>
                           <Button variant="ghost" size="sm" className="h-7 text-xs">
@@ -401,75 +330,6 @@ export default function TeamPage() {
                           </Button>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="chat" className="mt-0">
-                  <div className="bg-slate-800/30 rounded-lg border border-slate-700/50 overflow-hidden flex flex-col h-[400px]">
-                    <div className="p-3 border-b border-slate-700/50 bg-slate-800/70 flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center mr-2">
-                          <Users className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-slate-200">Team Chat Room</div>
-                          <div className="text-xs text-slate-400">12 members</div>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" className="h-8 text-xs">
-                        Members
-                      </Button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                      {groupChatMessages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}>
-                          <div
-                            className={`max-w-[80%] rounded-lg p-3 ${
-                              msg.isUser
-                                ? "bg-purple-600/20 border border-purple-500/30 text-slate-200"
-                                : msg.sender === "System"
-                                  ? "bg-slate-800/70 border border-slate-700/50 text-slate-400 text-xs"
-                                  : "bg-slate-800/50 border border-slate-700/50 text-slate-300"
-                            }`}
-                          >
-                            {msg.sender !== "System" && (
-                              <div className="text-xs text-slate-500 mb-1">
-                                {msg.sender} • {msg.time}
-                              </div>
-                            )}
-                            <div className="text-sm">{msg.message}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="border-t border-slate-700/50 p-3">
-                      <div className="flex items-center space-x-2">
-                        <Input
-                          value={groupChatMessage}
-                          onChange={(e) => setGroupChatMessage(e.target.value)}
-                          placeholder="Message the team..."
-                          className="flex-1 bg-slate-800/50 border-slate-700/50 text-slate-200"
-                          onKeyDown={(e) => e.key === "Enter" && handleSendGroupMessage()}
-                        />
-                        <div className="flex space-x-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                            <ImageIcon className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                            <Mic className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            onClick={handleSendGroupMessage}
-                            disabled={!groupChatMessage.trim()}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </TabsContent>

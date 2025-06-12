@@ -2,48 +2,18 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { MatrixRain } from "@/components/matrix-rain"
 import { login } from "@/lib/auth-service"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@example.com")
-  const [password, setPassword] = useState("admin")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [loginMessage, setLoginMessage] = useState("")
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    const redirectPath = searchParams?.get("redirect")
-    if (redirectPath) {
-      setLoginMessage(`Login required to access: ${redirectPath}`)
-    }
-
-    // Check if there's an existing token in localStorage
-    const checkToken = () => {
-      try {
-        if (typeof window !== "undefined") {
-          const token = localStorage.getItem("auth_token")
-          if (token) {
-            // Validate the token format
-            JSON.parse(atob(token.split(".")[1] || token))
-            router.push("/dashboard")
-          }
-        }
-      } catch (err) {
-        // If token is invalid, clear it
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("auth_token")
-        }
-      }
-    }
-
-    checkToken()
-  }, [router, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,16 +21,10 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await login(email, password)
-      if (result.success) {
-        const redirectPath = searchParams?.get("redirect") || "/dashboard"
-        router.push(redirectPath)
-      } else {
-        setError(result.message || "Invalid email or password")
-      }
-    } catch (err: any) {
-      setError(err.message || "An error occurred during login")
-    } finally {
+      await login(email, password)
+      router.push("/dashboard")
+    } catch (err) {
+      setError("Invalid email or password")
       setIsLoading(false)
     }
   }
@@ -77,7 +41,6 @@ export default function LoginPage() {
           <img src="/images/mwwhite.png" alt="Matwix Logo" className="h-12 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-white tracking-wider">ACCESS PORTAL</h1>
           <div className="text-cyan-500 text-sm mt-2 font-mono">AUTHENTICATION REQUIRED</div>
-          {loginMessage && <div className="text-amber-400 text-sm mt-2 font-mono">{loginMessage}</div>}
         </div>
 
         <div className="bg-slate-900/70 backdrop-blur-md rounded-lg border border-slate-700/50 shadow-xl overflow-hidden">
@@ -159,17 +122,11 @@ export default function LoginPage() {
               Register
             </Link>
           </div>
-
-          <div className="px-6 py-3 bg-slate-800/90 border-t border-slate-700/50 text-center text-cyan-300">
-            <p className="text-xs">
-              For testing: use <strong>admin@example.com</strong> with password <strong>admin</strong>
-            </p>
-          </div>
         </div>
 
         <div className="text-center mt-6">
           <div className="text-xs text-slate-500 font-mono">SYSTEM STATUS: ONLINE</div>
-          <div className="text-xs text-slate-500 font-mono mt-1">VERSION 2.0.5</div>
+          <div className="text-xs text-slate-500 font-mono mt-1">VERSION 2.0.4</div>
         </div>
       </div>
     </div>

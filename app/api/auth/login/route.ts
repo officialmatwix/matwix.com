@@ -1,30 +1,17 @@
 import { NextResponse } from "next/server"
-
-// Mock user data for testing
-const MOCK_USERS = [
-  {
-    id: "1",
-    username: "admin",
-    email: "admin@example.com",
-    password: "admin", // Plain text for demo
-    firstName: "Admin",
-    lastName: "User",
-    rankId: "1",
-    status: "active",
-  },
-]
+import { executeQuery } from "@/lib/db"
 
 export async function POST(request: Request) {
   try {
-    // Parse the request body
-    const body = await request.json()
-    const { email, password } = body
+    const { email, password } = await request.json()
 
-    // Find the user by email
-    const user = MOCK_USERS.find((u) => u.email === email)
+    // In a real app, you would hash the password and compare with the stored hash
+    const users = await executeQuery<any[]>({
+      query: "SELECT id, username, email FROM users WHERE email = ? AND password = ? LIMIT 1",
+      values: [email, password], // In production, NEVER store or compare plain text passwords
+    })
 
-    // If no user found or password doesn't match
-    if (!user || (user.password !== password && password !== "admin")) {
+    if (users.length === 0) {
       return NextResponse.json(
         {
           success: false,
@@ -34,26 +21,25 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create a simple token (in a real app, use JWT)
-    // Remove the password from the user object
-    const { password: _, ...userWithoutPassword } = user
-    const token = btoa(JSON.stringify(userWithoutPassword))
+    const user = users[0]
 
-    // Return success response
+    // In a real app, you would create a JWT or session here
     return NextResponse.json({
       success: true,
       message: "Login successful",
-      user: userWithoutPassword,
-      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
     })
   } catch (error) {
     console.error("Login error:", error)
-
-    // Return error response
     return NextResponse.json(
       {
         success: false,
-        message: "An error occurred during login",
+        message: "Login failed",
+        error: (error as Error).message,
       },
       { status: 500 },
     )

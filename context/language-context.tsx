@@ -1,7 +1,6 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { translateWithCache } from "@/lib/translation-service"
 
 type Language = "en" | "es"
 
@@ -126,116 +125,18 @@ const translations: Translations = {
     en: "Recruitment",
     es: "Reclutamiento",
   },
-  banking: {
-    en: "Banking",
-    es: "Banca",
-  },
-  visualization: {
-    en: "Visualization",
-    es: "Visualización",
-  },
-  quantum: {
-    en: "Quantum Assistant",
-    es: "Asistente Cuántico",
-  },
-  insights: {
-    en: "Quantum Insights",
-    es: "Perspectivas Cuánticas",
-  },
-  compensation: {
-    en: "Compensation",
-    es: "Compensación",
-  },
-  markAllRead: {
-    en: "Mark all read",
-    es: "Marcar todo como leído",
-  },
-  viewAllNotifications: {
-    en: "View all notifications",
-    es: "Ver todas las notificaciones",
-  },
-  typeYourMessage: {
-    en: "Type your message...",
-    es: "Escribe tu mensaje...",
-  },
-  security: {
-    en: "Security",
-    es: "Seguridad",
-  },
-  account: {
-    en: "Account",
-    es: "Cuenta",
-  },
-  notifications: {
-    en: "Notifications",
-    es: "Notificaciones",
-  },
-  language: {
-    en: "Language",
-    es: "Idioma",
-  },
-  networkSettings: {
-    en: "Network Settings",
-    es: "Configuración de Red",
-  },
-  networkStructure: {
-    en: "Network Structure",
-    es: "Estructura de Red",
-  },
-  directReferrals: {
-    en: "Direct Referrals",
-    es: "Referencias Directas",
-  },
-  teamMembers: {
-    en: "Team Members",
-    es: "Miembros del Equipo",
-  },
-  networkVisualization: {
-    en: "Network Visualization",
-    es: "Visualización de Red",
-  },
-  networkStatistics: {
-    en: "Network Statistics",
-    es: "Estadísticas de Red",
-  },
-  totalMembers: {
-    en: "Total Members",
-    es: "Total de Miembros",
-  },
-  activeMembers: {
-    en: "Active Members",
-    es: "Miembros Activos",
-  },
-  newMembers: {
-    en: "New Members",
-    es: "Nuevos Miembros",
-  },
-  networkVolume: {
-    en: "Network Volume",
-    es: "Volumen de Red",
-  },
-  personalVolume: {
-    en: "Personal Volume",
-    es: "Volumen Personal",
-  },
-  groupVolume: {
-    en: "Group Volume",
-    es: "Volumen de Grupo",
-  },
 }
 
 type LanguageContextType = {
   language: Language
   setLanguage: (lang: Language) => void
   t: (key: string) => string
-  translateDynamic: (text: string) => Promise<string>
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>("en")
-  const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, Record<string, string>>>({})
 
   // Load language preference from localStorage on client side
   useEffect(() => {
@@ -250,7 +151,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("language", language)
   }, [language])
 
-  // Translation function for static content
+  // Translation function
   const t = (key: string): string => {
     const keys = key.split(".")
     let current = translations
@@ -270,50 +171,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       return translationObj[language]
     }
 
-    // Check dynamic translations
-    const dynamicKey = keys.join(".")
-    if (dynamicTranslations[dynamicKey] && dynamicTranslations[dynamicKey][language]) {
-      return dynamicTranslations[dynamicKey][language]
-    }
-
     // Fallback to the key if translation not found
     return key
   }
 
-  // Function to translate dynamic content using DeepL API
-  const translateDynamic = async (text: string): Promise<string> => {
-    if (language === "en") return text
-
-    // Check if we already have this translation cached
-    const cacheKey = `dynamic_${text}`
-    if (dynamicTranslations[cacheKey] && dynamicTranslations[cacheKey][language]) {
-      return dynamicTranslations[cacheKey][language]
-    }
-
-    try {
-      const translated = await translateWithCache(text, language === "es" ? "ES" : "EN")
-
-      // Cache the translation
-      setDynamicTranslations((prev) => ({
-        ...prev,
-        [cacheKey]: {
-          ...prev[cacheKey],
-          [language]: translated,
-        },
-      }))
-
-      return translated
-    } catch (error) {
-      console.error("Translation error:", error)
-      return text
-    }
-  }
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, translateDynamic }}>
-      {children}
-    </LanguageContext.Provider>
-  )
+  return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>
 }
 
 export function useLanguage() {
