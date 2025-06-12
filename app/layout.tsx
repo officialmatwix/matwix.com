@@ -38,7 +38,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="dark">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <LanguageProvider>
             <MLMDataProvider>{children}</MLMDataProvider>
           </LanguageProvider>
@@ -47,7 +47,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-
-
-import './globals.css'

@@ -1,480 +1,483 @@
 "use client"
 
-import type React from "react"
-
-import { useEffect, useRef, useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect, useRef, useState, useCallback } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ZoomIn, ZoomOut, Plus, Info, RefreshCw } from "lucide-react"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
+// Define the node type
 interface TreeNode {
   id: string
   name: string
   rank: string
-  avatar?: string
-  status: "active" | "inactive"
+  personalVolume: number
+  groupVolume: number
   children: [TreeNode | null, TreeNode | null]
-  volume?: {
-    left: number
-    right: number
-  }
-}
-
-// Enhanced sample data for the binary tree
-const sampleTreeData: TreeNode = {
-  id: "1",
-  name: "John Doe",
-  rank: "Diamond",
-  status: "active",
-  volume: {
-    left: 12500,
-    right: 9800,
-  },
-  children: [
-    {
-      id: "2",
-      name: "Alice Smith",
-      rank: "Gold",
-      status: "active",
-      volume: {
-        left: 5200,
-        right: 3600,
-      },
-      children: [
-        {
-          id: "4",
-          name: "Bob Johnson",
-          rank: "Silver",
-          status: "active",
-          volume: {
-            left: 2100,
-            right: 0,
-          },
-          children: [
-            {
-              id: "8",
-              name: "Emma Davis",
-              rank: "Bronze",
-              status: "active",
-              volume: {
-                left: 0,
-                right: 0,
-              },
-              children: [null, null],
-            },
-            null,
-          ],
-        },
-        {
-          id: "5",
-          name: "Carol Williams",
-          rank: "Silver",
-          status: "inactive",
-          volume: {
-            left: 1800,
-            right: 1200,
-          },
-          children: [null, null],
-        },
-      ],
-    },
-    {
-      id: "3",
-      name: "David Brown",
-      rank: "Platinum",
-      status: "active",
-      volume: {
-        left: 4300,
-        right: 5100,
-      },
-      children: [
-        {
-          id: "6",
-          name: "Frank Miller",
-          rank: "Silver",
-          status: "active",
-          volume: {
-            left: 2100,
-            right: 1800,
-          },
-          children: [null, null],
-        },
-        {
-          id: "7",
-          name: "Grace Wilson",
-          rank: "Gold",
-          status: "active",
-          volume: {
-            left: 0,
-            right: 2400,
-          },
-          children: [
-            null,
-            {
-              id: "9",
-              name: "Henry Taylor",
-              rank: "Bronze",
-              status: "inactive",
-              volume: {
-                left: 0,
-                right: 0,
-              },
-              children: [null, null],
-            },
-          ],
-        },
-      ],
-    },
-  ],
+  isActive: boolean
+  joinDate: string
+  lastActive: string
 }
 
 export default function BinaryTreeVisualization() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [zoom, setZoom] = useState(1)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [networkData, setNetworkData] = useState<TreeNode | null>(null)
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
-  const [autoCenter, setAutoCenter] = useState(true)
+  const [viewMode, setViewMode] = useState<"rank" | "volume">("rank")
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
 
+  // Mock data for the binary tree
+  const mockNetworkData: TreeNode = {
+    id: "1",
+    name: "You",
+    rank: "Specialist",
+    personalVolume: 500,
+    groupVolume: 5000,
+    isActive: true,
+    joinDate: "2023-01-15",
+    lastActive: "2023-06-20",
+    children: [
+      {
+        id: "2",
+        name: "Alice Johnson",
+        rank: "Starter",
+        personalVolume: 200,
+        groupVolume: 1200,
+        isActive: true,
+        joinDate: "2023-02-10",
+        lastActive: "2023-06-18",
+        children: [
+          {
+            id: "4",
+            name: "David Smith",
+            rank: "Starter",
+            personalVolume: 150,
+            groupVolume: 150,
+            isActive: true,
+            joinDate: "2023-03-05",
+            lastActive: "2023-06-15",
+            children: [null, null],
+          },
+          {
+            id: "5",
+            name: "Emma Wilson",
+            rank: "Starter",
+            personalVolume: 100,
+            groupVolume: 100,
+            isActive: false,
+            joinDate: "2023-03-15",
+            lastActive: "2023-06-10",
+            children: [null, null],
+          },
+        ],
+      },
+      {
+        id: "3",
+        name: "Bob Miller",
+        rank: "Starter",
+        personalVolume: 300,
+        groupVolume: 1800,
+        isActive: true,
+        joinDate: "2023-02-20",
+        lastActive: "2023-06-19",
+        children: [
+          {
+            id: "6",
+            name: "Frank Thomas",
+            rank: "Starter",
+            personalVolume: 200,
+            groupVolume: 200,
+            isActive: true,
+            joinDate: "2023-04-05",
+            lastActive: "2023-06-17",
+            children: [null, null],
+          },
+          {
+            id: "7",
+            name: "Grace Lee",
+            rank: "Starter",
+            personalVolume: 150,
+            groupVolume: 150,
+            isActive: true,
+            joinDate: "2023-04-10",
+            lastActive: "2023-06-16",
+            children: [null, null],
+          },
+        ],
+      },
+    ],
+  }
+
+  // Load network data
   useEffect(() => {
-    if (containerRef.current) {
-      setContainerSize({
-        width: containerRef.current.offsetWidth,
-        height: containerRef.current.offsetHeight,
-      })
+    // Simulate API call
+    setTimeout(() => {
+      setNetworkData(mockNetworkData)
+      setSelectedNode(mockNetworkData)
+      setExpandedNodes(new Set([mockNetworkData.id]))
+      setIsLoading(false)
+    }, 1000)
+  }, [])
+
+  // Get color based on rank
+  const getRankColor = (rank: string): string => {
+    const rankColors: Record<string, string> = {
+      Starter: "#6b7280", // gray-500
+      Specialist: "#8b5cf6", // violet-500
+      Consultant: "#3b82f6", // blue-500
+      "Senior Consultant": "#0ea5e9", // sky-500
+      Manager: "#10b981", // emerald-500
+      "Senior Manager": "#f59e0b", // amber-500
+      Director: "#ef4444", // red-500
+      "Senior Director": "#ec4899", // pink-500
+      Executive: "#6366f1", // indigo-500
+      "Senior Executive": "#8b5cf6", // violet-500
+      President: "#f43f5e", // rose-500
+    }
+    return rankColors[rank] || "#6b7280"
+  }
+
+  // Get color based on volume
+  const getVolumeColor = (volume: number): string => {
+    if (volume >= 5000) return "#f43f5e" // rose-500
+    if (volume >= 2500) return "#8b5cf6" // violet-500
+    if (volume >= 1000) return "#6366f1" // indigo-500
+    if (volume >= 500) return "#3b82f6" // blue-500
+    if (volume >= 250) return "#0ea5e9" // sky-500
+    if (volume >= 100) return "#10b981" // emerald-500
+    return "#6b7280" // gray-500
+  }
+
+  // Draw the binary tree
+  const drawTree = useCallback(() => {
+    if (!canvasRef.current || !networkData) return
+
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    // Set canvas dimensions
+    const width = canvas.width
+    const height = canvas.height
+
+    // Node dimensions
+    const nodeRadius = 25
+    const nodeSpacing = 120
+    const levelHeight = 100
+
+    // Function to draw a node
+    const drawNode = (
+      node: TreeNode | null,
+      x: number,
+      y: number,
+      level: number,
+      position: number,
+      parentX?: number,
+      parentY?: number,
+    ) => {
+      if (!node) {
+        // Draw empty node placeholder
+        ctx.beginPath()
+        ctx.arc(x, y, nodeRadius / 2, 0, Math.PI * 2)
+        ctx.fillStyle = "#374151" // gray-700
+        ctx.fill()
+        ctx.strokeStyle = "#4b5563" // gray-600
+        ctx.stroke()
+        return
+      }
+
+      // Draw connection line to parent
+      if (parentX !== undefined && parentY !== undefined) {
+        ctx.beginPath()
+        ctx.moveTo(parentX, parentY + nodeRadius)
+        ctx.lineTo(x, y - nodeRadius)
+        ctx.strokeStyle = "#4b5563" // gray-600
+        ctx.lineWidth = 2
+        ctx.stroke()
+      }
+
+      // Draw node circle
+      ctx.beginPath()
+      ctx.arc(x, y, nodeRadius, 0, Math.PI * 2)
+
+      // Fill based on view mode
+      if (viewMode === "rank") {
+        ctx.fillStyle = getRankColor(node.rank)
+      } else {
+        ctx.fillStyle = getVolumeColor(node.groupVolume)
+      }
+
+      // Highlight selected node
+      if (selectedNode && node.id === selectedNode.id) {
+        ctx.lineWidth = 3
+        ctx.strokeStyle = "#f59e0b" // amber-500
+      } else {
+        ctx.lineWidth = 2
+        ctx.strokeStyle = "#1f2937" // gray-800
+      }
+
+      ctx.fill()
+      ctx.stroke()
+
+      // Draw node text
+      ctx.fillStyle = "#ffffff"
+      ctx.font = "12px Arial"
+      ctx.textAlign = "center"
+      ctx.textBaseline = "middle"
+      ctx.fillText(node.name.split(" ")[0], x, y)
+
+      // Check if node is expanded
+      const isExpanded = expandedNodes.has(node.id)
+
+      // Draw children if expanded
+      if (isExpanded) {
+        const leftX = x - nodeSpacing * Math.pow(0.8, level)
+        const rightX = x + nodeSpacing * Math.pow(0.8, level)
+        const nextY = y + levelHeight
+
+        // Draw left child
+        drawNode(node.children[0], leftX, nextY, level + 1, position * 2, x, y)
+
+        // Draw right child
+        drawNode(node.children[1], rightX, nextY, level + 1, position * 2 + 1, x, y)
+      }
     }
 
+    // Start drawing from the root node
+    const rootX = width / 2
+    const rootY = 50
+    drawNode(networkData, rootX, rootY, 0, 0)
+
+    // Add click handler to canvas
+    const handleCanvasClick = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      const mouseX = event.clientX - rect.left
+      const mouseY = event.clientY - rect.top
+
+      // Function to check if a node was clicked
+      const findClickedNode = (
+        node: TreeNode | null,
+        x: number,
+        y: number,
+        level: number,
+        position: number,
+      ): TreeNode | null => {
+        if (!node) return null
+
+        // Check if click is within this node
+        const distance = Math.sqrt(Math.pow(mouseX - x, 2) + Math.pow(mouseY - y, 2))
+        if (distance <= nodeRadius) {
+          return node
+        }
+
+        // Check if node is expanded
+        if (expandedNodes.has(node.id)) {
+          const leftX = x - nodeSpacing * Math.pow(0.8, level)
+          const rightX = x + nodeSpacing * Math.pow(0.8, level)
+          const nextY = y + levelHeight
+
+          // Check left child
+          const leftResult = findClickedNode(node.children[0], leftX, nextY, level + 1, position * 2)
+          if (leftResult) return leftResult
+
+          // Check right child
+          const rightResult = findClickedNode(node.children[1], rightX, nextY, level + 1, position * 2 + 1)
+          if (rightResult) return rightResult
+        }
+
+        return null
+      }
+
+      // Find clicked node starting from root
+      const clickedNode = findClickedNode(networkData, rootX, rootY, 0, 0)
+
+      if (clickedNode) {
+        setSelectedNode(clickedNode)
+
+        // Toggle expansion
+        const newExpandedNodes = new Set(expandedNodes)
+        if (newExpandedNodes.has(clickedNode.id)) {
+          newExpandedNodes.delete(clickedNode.id)
+        } else {
+          newExpandedNodes.add(clickedNode.id)
+        }
+        setExpandedNodes(newExpandedNodes)
+
+        // Redraw the tree
+        drawTree()
+      }
+    }
+
+    // Remove previous event listener
+    canvas.removeEventListener("click", handleCanvasClick)
+
+    // Add new event listener
+    canvas.addEventListener("click", handleCanvasClick)
+
+    // Cleanup function
+    return () => {
+      canvas.removeEventListener("click", handleCanvasClick)
+    }
+  }, [networkData, selectedNode, expandedNodes, viewMode])
+
+  // Draw the tree when data changes
+  useEffect(() => {
+    if (!isLoading) {
+      drawTree()
+    }
+  }, [drawTree, isLoading])
+
+  // Handle window resize
+  useEffect(() => {
     const handleResize = () => {
-      if (containerRef.current) {
-        setContainerSize({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight,
-        })
+      if (canvasRef.current) {
+        canvasRef.current.width = canvasRef.current.offsetWidth
+        canvasRef.current.height = 500
+        drawTree()
       }
     }
 
     window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    handleResize()
 
-  // Auto-center the tree when the component mounts or container size changes
-  useEffect(() => {
-    if (autoCenter && containerSize.width > 0) {
-      setPosition({ x: 0, y: 0 })
-      // Adjust zoom based on container width for better initial view
-      const initialZoom = Math.min(Math.max(containerSize.width / 1200, 0.6), 1.2)
-      setZoom(initialZoom)
-      setAutoCenter(false)
+    return () => {
+      window.removeEventListener("resize", handleResize)
     }
-  }, [containerSize, autoCenter])
+  }, [drawTree])
 
-  const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 0.1, 2))
-  }
-
-  const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev - 0.1, 0.5))
-  }
-
-  const handleReset = () => {
-    setPosition({ x: 0, y: 0 })
-    setZoom(1)
-  }
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setDragStart({ x: e.clientX, y: e.clientY })
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      const dx = e.clientX - dragStart.x
-      const dy = e.clientY - dragStart.y
-      setPosition((prev) => ({ x: prev.x + dx, y: prev.y + dy }))
-      setDragStart({ x: e.clientX, y: e.clientY })
-    }
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  const handleNodeClick = (node: TreeNode) => {
-    setSelectedNode(node)
-  }
-
-  // Handle touch events for mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      setIsDragging(true)
-      setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY })
-    }
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (isDragging && e.touches.length === 1) {
-      const dx = e.touches[0].clientX - dragStart.x
-      const dy = e.touches[0].clientY - dragStart.y
-      setPosition((prev) => ({ x: prev.x + dx, y: prev.y + dy }))
-      setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY })
-    }
-  }
-
-  const handleTouchEnd = () => {
-    setIsDragging(false)
+  // Toggle view mode
+  const toggleViewMode = () => {
+    setViewMode(viewMode === "rank" ? "volume" : "rank")
   }
 
   return (
-    <div className="relative w-full h-full min-h-[500px] bg-slate-900/50 rounded-lg border border-slate-800">
-      <div className="absolute top-2 right-2 flex space-x-2 z-10">
-        <Button
-          variant="outline"
-          size="sm"
-          className="bg-slate-800/70 border-slate-700 hover:bg-slate-700"
-          onClick={handleZoomOut}
-          title="Zoom Out"
-        >
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="bg-slate-800/70 border-slate-700 hover:bg-slate-700"
-          onClick={handleZoomIn}
-          title="Zoom In"
-        >
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="bg-slate-800/70 border-slate-700 hover:bg-slate-700"
-          onClick={handleReset}
-          title="Reset View"
-        >
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div
-        ref={containerRef}
-        className="w-full h-full overflow-hidden cursor-move"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div
-          className="relative transition-transform duration-100"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-            transformOrigin: "center",
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          <div className="absolute left-1/2 top-10 -translate-x-1/2">
-            <TreeNodeComponent
-              node={sampleTreeData}
-              onNodeClick={handleNodeClick}
-              level={0}
-              position="root"
-              containerWidth={containerSize.width}
-            />
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardTitle>Binary Network Visualization</CardTitle>
+            <Button onClick={toggleViewMode} variant="outline" size="sm">
+              {viewMode === "rank" ? "Switch to Volume View" : "Switch to Rank View"}
+            </Button>
           </div>
-        </div>
-      </div>
-
-      {selectedNode && (
-        <div className="absolute bottom-4 left-4 right-4 z-10">
-          <Card className="bg-slate-800/90 border-slate-700 backdrop-blur-sm p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border-2 border-cyan-500/50">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt={selectedNode.name} />
-                <AvatarFallback className="bg-slate-700 text-cyan-500">{selectedNode.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-medium text-slate-200">{selectedNode.name}</h3>
-                  <Badge
-                    variant="outline"
-                    className={`${
-                      selectedNode.status === "active"
-                        ? "bg-green-500/10 text-green-400 border-green-500/30"
-                        : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                    } text-xs`}
-                  >
-                    {selectedNode.status}
-                  </Badge>
-                </div>
-                <p className="text-xs text-slate-400">
-                  ID: {selectedNode.id} • Rank: {selectedNode.rank}
-                </p>
-                {selectedNode.volume && (
-                  <p className="text-xs text-slate-400 mt-1">
-                    Volume: Left {selectedNode.volume.left.toLocaleString()} • Right{" "}
-                    {selectedNode.volume.right.toLocaleString()}
-                  </p>
-                )}
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-[500px]">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="relative border border-slate-800 rounded-lg overflow-hidden">
+                <canvas ref={canvasRef} className="w-full h-[500px]" style={{ touchAction: "none" }} />
               </div>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-slate-700/50 border-slate-600 hover:bg-slate-700 text-xs flex-1 sm:flex-auto"
-              >
-                <Info className="h-3 w-3 mr-1" />
-                Details
-              </Button>
-              <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-xs flex-1 sm:flex-auto">
-                <Plus className="h-3 w-3 mr-1" />
-                Add Member
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
-    </div>
-  )
-}
 
-interface TreeNodeComponentProps {
-  node: TreeNode | null
-  onNodeClick: (node: TreeNode) => void
-  level: number
-  position: "left" | "right" | "root"
-  containerWidth: number
-}
+              {selectedNode && (
+                <Card className="bg-slate-900 border-slate-700">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Node Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs defaultValue="info">
+                      <TabsList className="mb-4">
+                        <TabsTrigger value="info">Info</TabsTrigger>
+                        <TabsTrigger value="volume">Volume</TabsTrigger>
+                        <TabsTrigger value="activity">Activity</TabsTrigger>
+                      </TabsList>
 
-function TreeNodeComponent({ node, onNodeClick, level, position, containerWidth }: TreeNodeComponentProps) {
-  if (!node) {
-    return (
-      <div className="flex flex-col items-center">
-        <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center bg-slate-800/50">
-          <Plus className="h-5 w-5 text-slate-600" />
-        </div>
-      </div>
-    )
-  }
+                      <TabsContent value="info">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="text-sm text-slate-400">Name:</div>
+                          <div className="text-sm font-medium">{selectedNode.name}</div>
 
-  // Calculate spacing based on level and container width
-  const baseSpacing = Math.max(40, containerWidth / 10)
-  const spacing = baseSpacing / (level + 1)
-  const horizontalOffset = spacing * Math.pow(2, 3 - level)
+                          <div className="text-sm text-slate-400">ID:</div>
+                          <div className="text-sm font-mono">{selectedNode.id}</div>
 
-  const getRankColor = (rank: string) => {
-    switch (rank.toLowerCase()) {
-      case "diamond":
-        return "border-cyan-500 bg-cyan-500/20"
-      case "platinum":
-        return "border-indigo-500 bg-indigo-500/20"
-      case "gold":
-        return "border-amber-500 bg-amber-500/20"
-      case "silver":
-        return "border-slate-400 bg-slate-400/20"
-      case "bronze":
-        return "border-orange-500 bg-orange-500/20"
-      default:
-        return "border-slate-500 bg-slate-500/20"
-    }
-  }
+                          <div className="text-sm text-slate-400">Rank:</div>
+                          <div className="text-sm font-medium">
+                            <span
+                              className="inline-block w-3 h-3 rounded-full mr-1"
+                              style={{ backgroundColor: getRankColor(selectedNode.rank) }}
+                            ></span>
+                            {selectedNode.rank}
+                          </div>
 
-  // Calculate volume indicators
-  const hasVolume = node.volume && (node.volume.left > 0 || node.volume.right > 0)
-  const leftVolumeClass = position === "left" || position === "root" ? "bg-green-500/20" : ""
-  const rightVolumeClass = position === "right" || position === "root" ? "bg-blue-500/20" : ""
+                          <div className="text-sm text-slate-400">Status:</div>
+                          <div className="text-sm">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                selectedNode.isActive ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"
+                              }`}
+                            >
+                              {selectedNode.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+                        </div>
+                      </TabsContent>
 
-  return (
-    <div className="flex flex-col items-center">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              className={`w-12 h-12 rounded-full border-2 ${getRankColor(
-                node.rank,
-              )} flex items-center justify-center cursor-pointer hover:scale-110 transition-transform`}
-              onClick={() => onNodeClick(node)}
-            >
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" alt={node.name} />
-                <AvatarFallback className="bg-slate-800 text-slate-200 text-xs">
-                  {node.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="bg-slate-800 border-slate-700">
-            <div className="text-xs">
-              <p className="font-medium">{node.name}</p>
-              <p className="text-slate-400">Rank: {node.rank}</p>
-              {hasVolume && (
-                <div className="mt-1">
-                  <p className="text-green-400">Left: {node.volume?.left.toLocaleString()}</p>
-                  <p className="text-blue-400">Right: {node.volume?.right.toLocaleString()}</p>
-                </div>
+                      <TabsContent value="volume">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="text-sm text-slate-400">Personal Volume:</div>
+                          <div className="text-sm font-medium">{selectedNode.personalVolume} PV</div>
+
+                          <div className="text-sm text-slate-400">Group Volume:</div>
+                          <div className="text-sm font-medium">{selectedNode.groupVolume} GV</div>
+
+                          <div className="text-sm text-slate-400">Left Leg:</div>
+                          <div className="text-sm font-medium">
+                            {selectedNode.children[0] ? selectedNode.children[0].groupVolume : 0} GV
+                          </div>
+
+                          <div className="text-sm text-slate-400">Right Leg:</div>
+                          <div className="text-sm font-medium">
+                            {selectedNode.children[1] ? selectedNode.children[1].groupVolume : 0} GV
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="activity">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="text-sm text-slate-400">Join Date:</div>
+                          <div className="text-sm font-medium">{selectedNode.joinDate}</div>
+
+                          <div className="text-sm text-slate-400">Last Active:</div>
+                          <div className="text-sm font-medium">{selectedNode.lastActive}</div>
+
+                          <div className="text-sm text-slate-400">Downline Count:</div>
+                          <div className="text-sm font-medium">{countDownline(selectedNode)} members</div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
               )}
             </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      {/* Volume indicators */}
-      {hasVolume && (
-        <div className="flex gap-1 mt-1">
-          <div
-            className={`h-1 rounded-full ${leftVolumeClass}`}
-            style={{ width: `${Math.min(node.volume?.left || 0, 50) / 5}px` }}
-          ></div>
-          <div
-            className={`h-1 rounded-full ${rightVolumeClass}`}
-            style={{ width: `${Math.min(node.volume?.right || 0, 50) / 5}px` }}
-          ></div>
-        </div>
-      )}
-
-      {(node.children[0] || node.children[1]) && (
-        <>
-          <div className="h-6 w-px bg-slate-700"></div>
-          <div className="flex items-center">
-            <div className="h-px bg-slate-700" style={{ width: `${horizontalOffset * 2}px` }}></div>
-          </div>
-          <div className="flex justify-between" style={{ width: `${horizontalOffset * 2}px` }}>
-            <div className="flex flex-col items-center">
-              <div className="h-6 w-px bg-slate-700"></div>
-              <TreeNodeComponent
-                node={node.children[0]}
-                onNodeClick={onNodeClick}
-                level={level + 1}
-                position="left"
-                containerWidth={containerWidth}
-              />
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="h-6 w-px bg-slate-700"></div>
-              <TreeNodeComponent
-                node={node.children[1]}
-                onNodeClick={onNodeClick}
-                level={level + 1}
-                position="right"
-                containerWidth={containerWidth}
-              />
-            </div>
-          </div>
-        </>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
+// Helper function to count downline members
+function countDownline(node: TreeNode): number {
+  if (!node) return 0
+
+  let count = 0
+
+  // Count left child and its downline
+  if (node.children[0]) {
+    count += 1 + countDownline(node.children[0])
+  }
+
+  // Count right child and its downline
+  if (node.children[1]) {
+    count += 1 + countDownline(node.children[1])
+  }
+
+  return count
+}

@@ -63,10 +63,7 @@ function UserAvatarMenu({
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Billing</span>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="cursor-pointer hover:bg-slate-700"
-            onClick={() => router.push("/dashboard/settings")}
-          >
+          <DropdownMenuItem className="cursor-pointer hover:bg-slate-700">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </DropdownMenuItem>
@@ -89,4 +86,3 @@ export default UserAvatarMenu
 
 // Also export as named export for backward compatibility
 export { UserAvatarMenu }
-

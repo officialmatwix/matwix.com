@@ -9,7 +9,7 @@ import { UserPlus, TrendingUp, Calendar, Copy, Share2, Mail, MessageSquare, Down
 import { formatCurrency } from "@/lib/utils"
 
 export default function RecruitmentPage() {
-  const [referralLink, setReferralLink] = useState("https://nexusmlm.com/join/ref/12345")
+  const [referralLink, setReferralLink] = useState("https://matwix.com/join/ref/12345")
   const [copied, setCopied] = useState(false)
 
   const copyToClipboard = () => {
@@ -286,4 +286,3 @@ export default function RecruitmentPage() {
     </div>
   )
 }
-

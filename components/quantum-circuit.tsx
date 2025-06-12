@@ -117,4 +117,3 @@ export function QuantumCircuit() {
 
 // Keep the default export for backward compatibility
 export default QuantumCircuit
-

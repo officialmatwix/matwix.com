@@ -78,4 +78,3 @@ export async function mockAPICall<T>(data: T, delay = 500): Promise<T> {
     }, delay)
   })
 }
-

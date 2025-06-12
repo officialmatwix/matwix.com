@@ -1,12 +1,11 @@
 "use client"
 
 // Client-side authentication service
-// This file should only contain client-side code
 
-// Function to simulate login
+// Function to handle login
 export async function login(email: string, password: string) {
   try {
-    // Call the login API endpoint instead of directly accessing the database
+    // Call the login API endpoint
     const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: {
@@ -15,23 +14,33 @@ export async function login(email: string, password: string) {
       body: JSON.stringify({ email, password }),
     })
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || "Login failed")
+    // Always try to parse the response as JSON first
+    let data
+    try {
+      data = await response.json()
+    } catch (e) {
+      // If JSON parsing fails, get the text
+      const text = await response.text()
+      data = {
+        success: false,
+        message: `Server returned invalid response: ${text.substring(0, 100)}`,
+      }
     }
 
-    const data = await response.json()
+    // If the response was not ok, throw an error with the message
+    if (!response.ok) {
+      throw new Error(data.message || `Login failed with status: ${response.status}`)
+    }
 
-    // Store token in localStorage
-    if (typeof window !== "undefined") {
+    // Store token in localStorage if login was successful
+    if (data.success && data.token) {
       localStorage.setItem("auth_token", data.token)
-
       // Also set a cookie for the middleware
       document.cookie = `auth_token=${data.token}; path=/; max-age=86400; SameSite=Lax`
     }
 
     return data
-  } catch (error) {
+  } catch (error: any) {
     console.error("Login error:", error)
     throw error
   }
@@ -50,9 +59,12 @@ export function getCurrentUser() {
   }
 
   try {
-    return JSON.parse(atob(token))
+    // Handle both JWT and simple base64 tokens
+    return JSON.parse(atob(token.split(".")[1] || token))
   } catch (error) {
     console.error("Error parsing auth token:", error)
+    // Clear invalid token
+    localStorage.removeItem("auth_token")
     return null
   }
 }
@@ -61,9 +73,10 @@ export function getCurrentUser() {
 export function logout() {
   if (typeof window !== "undefined") {
     localStorage.removeItem("auth_token")
-
     // Also clear the cookie
     document.cookie = "auth_token=; path=/; max-age=0; SameSite=Lax"
+    // Redirect to login page
+    window.location.href = "/login"
   }
 }
 
@@ -71,4 +84,3 @@ export function logout() {
 export function isAuthenticated() {
   return getCurrentUser() !== null
 }
-

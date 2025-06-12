@@ -24,4 +24,3 @@ console.log("correct:", correct)
 console.log("and:", and)
 
 // End of placeholder.
-

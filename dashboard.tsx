@@ -13,13 +13,12 @@ import {
   Download,
   Globe,
   HardDrive,
-  Hexagon,
   LineChart,
   Lock,
   type LucideIcon,
   MessageSquare,
   Mic,
-  Moon,
+  LogOut,
   Radio,
   RefreshCw,
   Search,
@@ -216,9 +215,18 @@ export default function Dashboard() {
         {/* Header */}
         <header className="flex items-center justify-between py-4 border-b border-slate-700/50 mb-6">
           <div className="flex items-center space-x-2">
-            <Hexagon className="h-8 w-8 text-cyan-500" />
-            <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              NEXUS OS
+            {/* Matwix Logo with Animation */}
+            <div className="relative w-10 h-10 mr-2">
+              <div className="absolute inset-0 rounded-full border-2 border-purple-500/30 animate-pulse"></div>
+              <div className="absolute inset-0 rounded-full border-t-2 border-purple-500 animate-spin-slow"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-cyan-400 rounded-full pulse-shadow flex items-center justify-center text-white font-bold text-xs">
+                  MW
+                </div>
+              </div>
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              MATWIX OS
             </span>
           </div>
 
@@ -256,7 +264,7 @@ export default function Dashboard() {
                       onClick={toggleTheme}
                       className="text-slate-400 hover:text-slate-100"
                     >
-                      {theme === "dark" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                      {theme === "dark" ? <Sun className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -288,6 +296,7 @@ export default function Dashboard() {
                   <NavItem icon={Terminal} label="Console" />
                   <NavItem icon={MessageSquare} label="Communications" />
                   <NavItem icon={Settings} label="Settings" />
+                  <NavItem icon={LogOut} label="Logout" />
                 </nav>
 
                 <div className="mt-8 pt-6 border-t border-slate-700/50">
@@ -651,21 +660,6 @@ export default function Dashboard() {
                         <div className="text-sm font-mono text-slate-200">UTC-08:00</div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Quick actions */}
-              <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-slate-100 text-base">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
-                    <ActionButton icon={Shield} label="Security Scan" />
-                    <ActionButton icon={RefreshCw} label="Sync Data" />
-                    <ActionButton icon={Download} label="Backup" />
-                    <ActionButton icon={Terminal} label="Console" />
                   </div>
                 </CardContent>
               </Card>
@@ -1104,19 +1098,6 @@ function CommunicationItem({
   )
 }
 
-// Action button component
-function ActionButton({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
-  return (
-    <Button
-      variant="outline"
-      className="h-auto py-3 px-3 border-slate-700 bg-slate-800/50 hover:bg-slate-700/50 flex flex-col items-center justify-center space-y-1 w-full"
-    >
-      <Icon className="h-5 w-5 text-cyan-500" />
-      <span className="text-xs">{label}</span>
-    </Button>
-  )
-}
-
 // Add missing imports
 function Info(props) {
   return <AlertCircle {...props} />
@@ -1125,4 +1106,3 @@ function Info(props) {
 function Check(props) {
   return <Shield {...props} />
 }
-

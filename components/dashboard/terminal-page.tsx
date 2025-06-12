@@ -39,4 +39,3 @@ export default function TerminalPage() {
     </div>
   )
 }
-

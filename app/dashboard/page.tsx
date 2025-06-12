@@ -1,11 +1,13 @@
+import { Suspense } from "react"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
-import DashboardHome from "@/components/dashboard/dashboard-home"
+import QuantumDashboardHome from "@/components/dashboard/quantum-dashboard-home"
 
 export default function DashboardPage() {
   return (
     <DashboardLayout>
-      <DashboardHome />
+      <Suspense fallback={<div className="p-4 text-center">Loading quantum dashboard...</div>}>
+        <QuantumDashboardHome />
+      </Suspense>
     </DashboardLayout>
   )
 }
-

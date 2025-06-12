@@ -2,524 +2,475 @@
 
 import type React from "react"
 
-import { useEffect, useState, useRef } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
-  Bell,
-  Command,
-  DollarSign,
-  Gift,
-  Award,
-  Moon,
-  Network,
-  Search,
-  Settings,
-  Sun,
-  UserPlus,
+  Home,
   Users,
+  DollarSign,
+  Package,
+  UserPlus,
+  Award,
+  Settings,
   Menu,
-  Code,
+  X,
+  Network,
   BookOpen,
+  BarChart2,
+  Terminal,
+  Brain,
+  ChevronRight,
+  ChevronLeft,
   Sparkles,
+  Bell,
+  MessageSquare,
+  LogOut,
   Globe,
+  Send,
 } from "lucide-react"
-import type { LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
-import { useTheme } from "next-themes"
-import { useMLMData } from "@/context/mlm-data-context"
+import { cn } from "@/lib/utils"
+import { MatwixCompensationProvider } from "@/context/matwix-compensation-context"
+import { MLMDataProvider } from "@/context/mlm-data-context"
 import { useLanguage } from "@/context/language-context"
-import UserAvatarMenu from "@/components/user-avatar-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useMLMData } from "@/hooks/use-mlm-data"
 
-export default function DashboardLayout({
-  children,
-}: {
+interface DashboardLayoutProps {
   children: React.ReactNode
-}) {
-  const { theme, setTheme } = useTheme()
-  const { networkGrowth, rankProgress, recruitmentStatus } = useMLMData()
-  const { language, setLanguage, t } = useLanguage()
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [isLoading, setIsLoading] = useState(true)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const router = useRouter()
-  const pathname = usePathname()
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+}
 
-  // Simulate data loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
+// Notification dropdown component
+function NotificationDropdown() {
+  const mlmData = useMLMData()
+  const notifications = mlmData?.notifications || [] // Add fallback empty array
+  const { t } = useLanguage()
+  const [unreadCount, setUnreadCount] = useState(3)
 
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Update time
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  // Particle effect
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    canvas.width = canvas.offsetWidth
-    canvas.height = canvas.offsetHeight
-
-    const particles: Particle[] = []
-    const particleCount = 100
-
-    class Particle {
-      x: number
-      y: number
-      size: number
-      speedX: number
-      speedY: number
-      color: string
-
-      constructor() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
-        this.size = Math.random() * 3 + 1
-        this.speedX = (Math.random() - 0.5) * 0.5
-        this.speedY = (Math.random() - 0.5) * 0.5
-        this.color = `rgba(${Math.floor(Math.random() * 100) + 100}, ${Math.floor(Math.random() * 100) + 150}, ${Math.floor(Math.random() * 55) + 200}, ${Math.random() * 0.5 + 0.2})`
-      }
-
-      update() {
-        this.x += this.speedX
-        this.y += this.speedY
-
-        if (this.x > canvas.width) this.x = 0
-        if (this.x < 0) this.x = canvas.width
-        if (this.y > canvas.height) this.y = 0
-        if (this.y < 0) this.y = canvas.height
-      }
-
-      draw() {
-        if (!ctx) return
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-        ctx.fill()
-      }
-    }
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle())
-    }
-
-    function animate() {
-      if (!ctx || !canvas) return
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      for (const particle of particles) {
-        particle.update()
-        particle.draw()
-      }
-
-      requestAnimationFrame(animate)
-    }
-
-    animate()
-
-    const handleResize = () => {
-      if (!canvas) return
-      canvas.width = canvas.offsetWidth
-      canvas.height = canvas.offsetHeight
-    }
-
-    window.addEventListener("resize", handleResize)
-
-    return () => {
-      window.removeEventListener("resize", handleResize)
-    }
-  }, [])
-
-  // Toggle theme
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark")
-  }
-
-  // Toggle language
-  const toggleLanguage = () => {
-    setLanguage(language === "en" ? "es" : "en")
+  const handleMarkAllRead = () => {
+    setUnreadCount(0)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black to-slate-900 text-slate-100 relative overflow-hidden">
-      {/* Background particle effect */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-30" />
-
-      {/* Loading overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="flex flex-col items-center">
-            <div className="relative w-24 h-24">
-              <div className="absolute inset-0 border-4 border-cyan-500/30 rounded-full animate-ping"></div>
-              <div className="absolute inset-2 border-4 border-t-cyan-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-              <div className="absolute inset-4 border-4 border-r-purple-500 border-t-transparent border-b-transparent border-l-transparent rounded-full animate-spin-slow"></div>
-              <div className="absolute inset-6 border-4 border-b-blue-500 border-t-transparent border-r-transparent border-l-transparent rounded-full animate-spin-slower"></div>
-              <div className="absolute inset-8 border-4 border-l-green-500 border-t-transparent border-r-transparent border-b-transparent rounded-full animate-spin"></div>
-            </div>
-            <div className="mt-4 text-cyan-500 font-mono text-sm tracking-wider">NETWORK INITIALIZING</div>
-          </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+              {unreadCount}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0 border border-slate-700 bg-slate-900/95 backdrop-blur-sm shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-700 p-3">
+          <h3 className="font-medium text-slate-100">{t("notifications")}</h3>
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={handleMarkAllRead}>
+            {t("markAllRead")}
+          </Button>
         </div>
-      )}
-
-      <div className="container mx-auto px-2 sm:px-4 relative z-10">
-        {/* Header */}
-        <header className="flex items-center justify-between py-4 border-b border-slate-700/50 mb-6">
-          <div className="flex items-center">
-            <Link href="/dashboard">
-              <img src="/images/mwwhite.png" alt="Matrix Logo" className="h-8 sm:h-10 w-auto" />
-            </Link>
+        <ScrollArea className="h-[300px]">
+          <div className="space-y-0.5">
+            {notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`flex items-start gap-3 p-3 hover:bg-slate-800/50 ${
+                  notification.unread ? "bg-slate-800/20" : ""
+                }`}
+              >
+                <div
+                  className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full ${
+                    notification.type === "commission"
+                      ? "bg-green-500/20 text-green-400"
+                      : notification.type === "team"
+                        ? "bg-blue-500/20 text-blue-400"
+                        : "bg-purple-500/20 text-purple-400"
+                  }`}
+                >
+                  {notification.type === "commission" ? "$" : notification.type === "team" ? "T" : "S"}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-slate-200">{notification.message}</p>
+                  <p className="text-xs text-slate-400">{notification.time}</p>
+                </div>
+                {notification.unread && <div className="h-2 w-2 rounded-full bg-blue-500"></div>}
+              </div>
+            ))}
           </div>
+        </ScrollArea>
+        <div className="border-t border-slate-700 p-2 text-center">
+          <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-300">
+            {t("viewAllNotifications")}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
-          <div className="flex items-center space-x-2 sm:space-x-6">
-            <div className="hidden md:flex items-center space-x-1 bg-slate-800/50 rounded-full px-3 py-1.5 border border-slate-700/50 backdrop-blur-sm">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder={`${t("search")}...`}
-                className="bg-transparent border-none focus:outline-none text-sm w-40 placeholder:text-slate-500"
-              />
-            </div>
+// Chat component
+function ChatDropdown() {
+  const { t } = useLanguage()
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      content: "Hello! How can I assist you with your Matwix business today?",
+      sender: "assistant",
+      time: "10:30 AM",
+    },
+  ])
+  const [input, setInput] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
 
-            <div className="flex items-center space-x-1 sm:space-x-3">
-              {/* Language toggle */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleLanguage}
-                      className="text-slate-400 hover:text-slate-100"
-                    >
-                      <Globe className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{language === "en" ? "Switch to Spanish" : "Cambiar a Inglés"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+  const handleSend = () => {
+    if (input.trim()) {
+      // Add user message
+      const userMessage = {
+        id: messages.length + 1,
+        content: input,
+        sender: "user",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      }
+      setMessages((prev) => [...prev, userMessage])
+      setInput("")
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-slate-100">
-                      <Bell className="h-5 w-5" />
-                      <span className="absolute -top-1 -right-1 h-2 w-2 bg-cyan-500 rounded-full animate-pulse"></span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("notifications")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+      // Simulate assistant response after a short delay
+      setTimeout(() => {
+        const assistantMessage = {
+          id: messages.length + 2,
+          content: "I'm processing your request. Our AI assistant will help you shortly.",
+          sender: "assistant",
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        }
+        setMessages((prev) => [...prev, assistantMessage])
+      }, 1000)
+    }
+  }
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleTheme}
-                      className="text-slate-400 hover:text-slate-100"
-                    >
-                      {theme === "dark" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("toggleTheme")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <UserAvatarMenu
-                user={{
-                  name: "John Doe",
-                  email: "john.doe@example.com",
-                  role: "Gold Member",
-                }}
-              />
-
-              {/* Mobile menu button */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden text-slate-400 hover:text-slate-100">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[80%] sm:w-[350px] bg-slate-900/95 border-slate-700/50 p-0">
-                  <div className="flex flex-col h-full">
-                    <div className="p-4 border-b border-slate-700/50">
-                      <Link href="/dashboard" className="flex items-center">
-                        <img src="/images/mwwhite.png" alt="Matrix Logo" className="h-8 w-auto mr-2" />
-                      </Link>
-                    </div>
-                    <div className="p-4 flex-1 overflow-auto">
-                      <nav className="space-y-2">
-                        <MobileNavItem
-                          icon={Command}
-                          label={t("dashboard")}
-                          href="/dashboard"
-                          active={pathname === "/dashboard"}
-                        />
-                        <MobileNavItem
-                          icon={Network}
-                          label={t("network")}
-                          href="/dashboard/network"
-                          active={pathname === "/dashboard/network"}
-                        />
-                        <MobileNavItem
-                          icon={Users}
-                          label={t("team")}
-                          href="/dashboard/team"
-                          active={pathname === "/dashboard/team"}
-                        />
-                        <MobileNavItem
-                          icon={DollarSign}
-                          label={t("commissions")}
-                          href="/dashboard/commissions"
-                          active={pathname === "/dashboard/commissions"}
-                        />
-                        <MobileNavItem
-                          icon={Gift}
-                          label={t("products")}
-                          href="/dashboard/products"
-                          active={pathname === "/dashboard/products"}
-                        />
-                        <MobileNavItem
-                          icon={UserPlus}
-                          label={t("recruitment")}
-                          href="/dashboard/recruitment"
-                          active={pathname === "/dashboard/recruitment"}
-                        />
-                        <MobileNavItem
-                          icon={Award}
-                          label={t("achievements")}
-                          href="/dashboard/achievements"
-                          active={pathname === "/dashboard/achievements"}
-                        />
-                        <MobileNavItem
-                          icon={BookOpen}
-                          label={t("academy")}
-                          href="/dashboard/academy"
-                          active={pathname === "/dashboard/academy"}
-                        />
-                        <MobileNavItem
-                          icon={Sparkles}
-                          label={t("ai")}
-                          href="/dashboard/ai"
-                          active={pathname === "/dashboard/ai"}
-                        />
-                        <MobileNavItem
-                          icon={Code}
-                          label={t("terminal")}
-                          href="/dashboard/terminal"
-                          active={pathname === "/dashboard/terminal"}
-                        />
-                        <MobileNavItem
-                          icon={Settings}
-                          label={t("settings")}
-                          href="/dashboard/settings"
-                          active={pathname === "/dashboard/settings"}
-                        />
-                      </nav>
-
-                      <div className="mt-8 pt-6 border-t border-slate-700/50">
-                        <div className="text-xs text-slate-500 mb-2 font-mono">{t("networkStatus")}</div>
-                        <div className="space-y-3">
-                          <StatusItem label={t("networkGrowth")} value={networkGrowth} color="cyan" />
-                          <StatusItem label={t("rankProgress")} value={rankProgress} color="green" />
-                          <StatusItem label={t("recruitment")} value={recruitmentStatus} color="blue" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <MessageSquare className="h-5 w-5" />
+          <span className="absolute top-1 right-1 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0 border border-slate-700 bg-slate-900/95 backdrop-blur-sm shadow-xl">
+        <div className="flex flex-col h-[400px]">
+          <div className="flex items-center justify-between border-b border-slate-700 p-3">
+            <h3 className="font-medium text-slate-100">Matwix Assistant</h3>
           </div>
-        </header>
-
-        {/* Main content */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Sidebar - hidden on mobile */}
-          <div className="hidden md:block md:col-span-3 lg:col-span-2">
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm h-full">
-              <CardContent className="p-4 pt-6">
-                <nav className="space-y-2">
-                  <NavItem icon={Command} label={t("dashboard")} href="/dashboard" active={pathname === "/dashboard"} />
-                  <NavItem
-                    icon={Network}
-                    label={t("network")}
-                    href="/dashboard/network"
-                    active={pathname === "/dashboard/network"}
-                  />
-                  <NavItem
-                    icon={Users}
-                    label={t("team")}
-                    href="/dashboard/team"
-                    active={pathname === "/dashboard/team"}
-                  />
-                  <NavItem
-                    icon={DollarSign}
-                    label={t("commissions")}
-                    href="/dashboard/commissions"
-                    active={pathname === "/dashboard/commissions"}
-                  />
-                  <NavItem
-                    icon={Gift}
-                    label={t("products")}
-                    href="/dashboard/products"
-                    active={pathname === "/dashboard/products"}
-                  />
-                  <NavItem
-                    icon={UserPlus}
-                    label={t("recruitment")}
-                    href="/dashboard/recruitment"
-                    active={pathname === "/dashboard/recruitment"}
-                  />
-                  <NavItem
-                    icon={Award}
-                    label={t("achievements")}
-                    href="/dashboard/achievements"
-                    active={pathname === "/dashboard/achievements"}
-                  />
-                  <NavItem
-                    icon={BookOpen}
-                    label={t("academy")}
-                    href="/dashboard/academy"
-                    active={pathname === "/dashboard/academy"}
-                  />
-                  <NavItem icon={Sparkles} label={t("ai")} href="/dashboard/ai" active={pathname === "/dashboard/ai"} />
-                  <NavItem
-                    icon={Code}
-                    label={t("terminal")}
-                    href="/dashboard/terminal"
-                    active={pathname === "/dashboard/terminal"}
-                  />
-                  <NavItem
-                    icon={Settings}
-                    label={t("settings")}
-                    href="/dashboard/settings"
-                    active={pathname === "/dashboard/settings"}
-                  />
-                </nav>
-
-                <div className="mt-8 pt-6 border-t border-slate-700/50">
-                  <div className="text-xs text-slate-500 mb-2 font-mono">{t("networkStatus")}</div>
-                  <div className="space-y-3">
-                    <StatusItem label={t("networkGrowth")} value={networkGrowth} color="cyan" />
-                    <StatusItem label={t("rankProgress")} value={rankProgress} color="green" />
-                    <StatusItem label={t("recruitment")} value={recruitmentStatus} color="blue" />
+          <ScrollArea className="flex-1">
+            <div className="p-3 space-y-4">
+              {messages.map((message) => (
+                <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      message.sender === "user"
+                        ? "bg-purple-600 text-white"
+                        : "bg-slate-800 text-slate-100 border border-slate-700"
+                    }`}
+                  >
+                    <p className="text-sm">{message.content}</p>
+                    <p className="text-xs opacity-70 mt-1">{message.time}</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+          </ScrollArea>
+          <div className="border-t border-slate-700 p-3">
+            <div className="flex items-center gap-2">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                placeholder={t("typeYourMessage")}
+                className="flex-1 bg-slate-800 border-slate-700 text-slate-100"
+              />
+              <Button
+                onClick={handleSend}
+                size="icon"
+                className="h-8 w-8 bg-purple-600 hover:bg-purple-700"
+                disabled={!input.trim()}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
-          {/* Main content area - full width on mobile */}
-          <div className="col-span-1 md:col-span-9 lg:col-span-10">{children}</div>
         </div>
-      </div>
-    </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 
-// Component for nav items
-function NavItem({
-  icon: Icon,
-  label,
-  href,
-  active,
-}: {
-  icon: LucideIcon
-  label: string
-  href: string
-  active?: boolean
-}) {
+// Language toggle component
+function LanguageToggle() {
+  const { language, setLanguage, t } = useLanguage()
+
   return (
-    <Link href={href}>
-      <Button
-        variant="ghost"
-        className={`w-full justify-start ${active ? "bg-slate-800/70 text-cyan-400" : "text-slate-400 hover:text-slate-100"}`}
-      >
-        <Icon className="mr-2 h-4 w-4" />
-        {label}
-      </Button>
-    </Link>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Globe className="h-5 w-5" />
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-white">
+            {language.toUpperCase()}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-0 border border-slate-700 bg-slate-900/95 backdrop-blur-sm shadow-xl">
+        <div className="p-1">
+          <Button
+            variant={language === "en" ? "default" : "ghost"}
+            className="w-full justify-start mb-1"
+            onClick={() => setLanguage("en")}
+          >
+            <span className="mr-2">🇺🇸</span> English
+          </Button>
+          <Button
+            variant={language === "es" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => setLanguage("es")}
+          >
+            <span className="mr-2">🇪🇸</span> Español
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 
-// Component for mobile nav items
-function MobileNavItem({
-  icon: Icon,
-  label,
-  href,
-  active,
-}: {
-  icon: LucideIcon
-  label: string
-  href: string
-  active?: boolean
-}) {
-  return (
-    <Link href={href} className="block">
-      <Button
-        variant="ghost"
-        className={`w-full justify-start ${active ? "bg-slate-800/70 text-cyan-400" : "text-slate-400 hover:text-slate-100"}`}
-      >
-        <Icon className="mr-2 h-5 w-5" />
-        {label}
-      </Button>
-    </Link>
-  )
-}
+// Logout button component
+function LogoutButton() {
+  const { t } = useLanguage()
 
-// Component for status items
-function StatusItem({ label, value, color }: { label: string; value: number; color: string }) {
-  const getColor = () => {
-    switch (color) {
-      case "cyan":
-        return "from-cyan-500 to-blue-500"
-      case "green":
-        return "from-green-500 to-emerald-500"
-      case "blue":
-        return "from-blue-500 to-indigo-500"
-      case "purple":
-        return "from-purple-500 to-pink-500"
-      default:
-        return "from-cyan-500 to-blue-500"
-    }
+  const handleLogout = () => {
+    // Implement logout functionality
+    window.location.href = "/"
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <div className="text-xs text-slate-400">{label}</div>
-        <div className="text-xs text-slate-400">{value}%</div>
-      </div>
-      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-        <div className={`h-full bg-gradient-to-r ${getColor()} rounded-full`} style={{ width: `${value}%` }}></div>
-      </div>
-    </div>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleLogout}
+      className="rounded-full w-8 h-8 text-slate-400 hover:text-slate-100"
+      aria-label={t("logout")}
+    >
+      <LogOut className="h-5 w-5" />
+    </Button>
   )
 }
 
+// User avatar menu component
+function UserAvatarMenu() {
+  const { t } = useLanguage()
+  const user = { name: "Neo Anderson", email: "neo@matrix.com", role: "Gold Member" }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Avatar className="h-8 w-8 cursor-pointer border-2 border-transparent hover:border-cyan-500 transition-colors">
+          <AvatarImage src="/placeholder.svg?height=32&width=32" alt={user.name} />
+          <AvatarFallback className="bg-slate-700 text-cyan-500">
+            {user.name.charAt(0)}
+            {user.name.split(" ")[1]?.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-0 border border-slate-700 bg-slate-900/95 backdrop-blur-sm shadow-xl">
+        <div className="p-3 border-b border-slate-700">
+          <p className="text-sm font-medium text-slate-100">{user.name}</p>
+          <p className="text-xs text-slate-400">{user.email}</p>
+          <p className="text-xs text-cyan-400 mt-1">{user.role}</p>
+        </div>
+        <div className="p-1">
+          <Button variant="ghost" className="w-full justify-start text-sm">
+            <Users className="mr-2 h-4 w-4" /> {t("profile")}
+          </Button>
+          <Button variant="ghost" className="w-full justify-start text-sm">
+            <Settings className="mr-2 h-4 w-4" /> {t("settings")}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-sm text-red-400"
+            onClick={() => (window.location.href = "/")}
+          >
+            <LogOut className="mr-2 h-4 w-4" /> {t("logout")}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+  const pathname = usePathname()
+  const { t } = useLanguage()
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 1024)
+      if (window.innerWidth < 1024) {
+        setIsSidebarOpen(false)
+      } else {
+        setIsSidebarOpen(true)
+      }
+    }
+
+    checkScreenSize()
+    window.addEventListener("resize", checkScreenSize)
+    return () => window.removeEventListener("resize", checkScreenSize)
+  }, [pathname])
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen)
+  }
+
+  const navItems = [
+    { name: t("dashboard"), href: "/dashboard", icon: Home },
+    { name: t("team"), href: "/dashboard/team", icon: Users },
+    { name: t("network"), href: "/dashboard/network", icon: Network },
+    { name: t("banking"), href: "/dashboard/banking", icon: DollarSign },
+    { name: t("products"), href: "/dashboard/products", icon: Package },
+    { name: t("recruitment"), href: "/dashboard/recruitment", icon: UserPlus },
+    { name: t("achievements"), href: "/dashboard/achievements", icon: Award },
+    { name: t("academy"), href: "/dashboard/academy", icon: BookOpen },
+    { name: t("compensation"), href: "/dashboard/compensation", icon: BarChart2 },
+    { name: t("visualization"), href: "/dashboard/visualization", icon: Terminal },
+    { name: t("quantum"), href: "/dashboard/quantum", icon: Brain },
+    { name: t("insights"), href: "/dashboard/insights", icon: Sparkles },
+    { name: t("settings"), href: "/dashboard/settings", icon: Settings },
+  ]
+
+  return (
+    <MatwixCompensationProvider>
+      <MLMDataProvider>
+        <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+          {/* Sidebar */}
+          <div
+            className={cn(
+              "fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-800/50 transition-all duration-300 ease-in-out transform lg:relative backdrop-blur-sm",
+              isSidebarOpen ? "w-64 translate-x-0" : "w-20 -translate-x-full lg:translate-x-0",
+            )}
+          >
+            <div className="flex flex-col h-full">
+              {/* Logo - Different sizes based on sidebar state */}
+              <div className="flex items-center justify-center p-0 border-b border-slate-800/50">
+                <Link href="/dashboard" className="flex items-center justify-center">
+                  {isSidebarOpen ? (
+                    // Large logo for expanded sidebar
+                    <div className="relative h-32 w-32">
+                      <img src="/images/mwwhite.png" alt="Matwix Logo" className="h-full w-full object-contain" />
+                    </div>
+                  ) : (
+                    // Small logo for collapsed sidebar
+                    <div className="relative h-16 w-16">
+                      <img src="/images/mwwhite.png" alt="Matwix Logo" className="h-full w-full object-contain" />
+                    </div>
+                  )}
+                </Link>
+                {isMobile && (
+                  <Button variant="ghost" size="icon" onClick={toggleSidebar} className="absolute right-4 lg:hidden">
+                    <X className="h-5 w-5" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Toggle button for desktop */}
+              {!isMobile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSidebar}
+                  className="absolute -right-3 top-20 bg-slate-800 border border-slate-700 rounded-full h-6 w-6 flex items-center justify-center z-10 hover:bg-slate-700"
+                >
+                  {isSidebarOpen ? <ChevronLeft className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                </Button>
+              )}
+
+              {/* Navigation */}
+              <nav className="flex-1 overflow-y-auto py-4 mt-4">
+                <ul className="space-y-1 px-2">
+                  {navItems.map((item) => (
+                    <li key={item.name}>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                          pathname === item.href || pathname.startsWith(`${item.href}/`)
+                            ? "bg-gradient-to-r from-purple-900/50 to-slate-800 text-purple-400 border-l-2 border-purple-500"
+                            : "text-slate-400 hover:text-white hover:bg-slate-800/50",
+                        )}
+                      >
+                        <item.icon className={cn("h-5 w-5", isSidebarOpen ? "mr-3" : "mx-auto")} />
+                        {isSidebarOpen && <span>{item.name}</span>}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-slate-800/50">
+                {isSidebarOpen ? (
+                  <div className="flex items-center justify-between">
+                    <LogoutButton />
+                    <span className="text-xs text-slate-500">The Real World v2.0.5</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-center">
+                    <LogoutButton />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Header */}
+            <header className="bg-slate-900/80 backdrop-blur-sm border-b border-slate-800/50 py-3 px-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  {isMobile && (
+                    <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  )}
+                  <div className="text-sm text-slate-400">
+                    <span className="text-purple-400 font-mono">QUANTUM</span> NETWORK
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <LanguageToggle />
+                  <ChatDropdown />
+                  <NotificationDropdown />
+                  <UserAvatarMenu />
+                </div>
+              </div>
+            </header>
+
+            {/* Content */}
+            <main className="flex-1 overflow-y-auto bg-slate-950 p-4">{children}</main>
+          </div>
+        </div>
+      </MLMDataProvider>
+    </MatwixCompensationProvider>
+  )
+}

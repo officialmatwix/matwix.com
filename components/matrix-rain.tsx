@@ -68,4 +68,3 @@ export function MatrixRain() {
 
 // Keep the default export for backward compatibility
 export default MatrixRain
-
